@@ -34,15 +34,15 @@ const draw = () => {
   ctx.stroke();
   ctx.closePath();
 
-  // draw c1
-  ctx.fillStyle = "red";
-  const coord1 = getCoordinates(c1);
-  ctx.fillRect(coord1[0], coord1[1], cellSize, cellSize);
-
   // draw c2
   ctx.fillStyle = "green";
   const coord2 = getCoordinates(c2);
   ctx.fillRect(coord2[0], coord2[1], cellSize, cellSize);
+
+  // draw c1
+  ctx.fillStyle = "red";
+  const coord1 = getCoordinates(c1);
+  ctx.fillRect(coord1[0], coord1[1], cellSize, cellSize);
 };
 
 draw();
