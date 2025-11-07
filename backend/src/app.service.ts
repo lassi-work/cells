@@ -43,7 +43,7 @@ export class AppService {
     let e = 1;
     let maxRewards = -Infinity;
     const rounds = 2000;
-    const states: number[] = [];
+    const states: number[][] = [];
 
     const decay = this.generateDecayFunction(e, 0.25 * rounds, 0.8 * rounds);
 
@@ -52,7 +52,9 @@ export class AppService {
       e = decay(e, i);
 
       let c1 = 1; // player - top left
-      states.push(c1);
+
+      states[i] = [];
+      states[i].push(c1);
 
       let roundRewards = 0;
 
@@ -61,7 +63,7 @@ export class AppService {
         roundRewards += this.rewards[c1];
         this.q[c1][action] = this.calculateQ(c1, this.c2, action);
         c1 = this.performAction(action, c1);
-        states.push(c1);
+        states[i].push(c1);
       }
 
       if (roundRewards > maxRewards) maxRewards = roundRewards;

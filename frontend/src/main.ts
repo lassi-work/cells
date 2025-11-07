@@ -1,13 +1,14 @@
 type Data = {
-  states: number[];
+  states: number[][];
   maxRewards: number;
 };
 
-const fps = 60;
+const fps = 10;
 const gridSize = 10; // 10x10
 const cellSize = 40;
 const boxesCount = gridSize * gridSize;
 let timer: number | null = null;
+let running = false;
 
 // two cells
 let c1 = 1; // top left
@@ -53,11 +54,22 @@ const draw = () => {
   ctx.fillStyle = "red";
   const coord1 = getCoordinates(c1);
   ctx.fillRect(coord1[0], coord1[1], cellSize, cellSize);
+
+  // draw status
+  if (!running) {
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#fff";
+    ctx.font = "30px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("STOPPED", canvas.width / 2, canvas.height / 2);
+  }
 };
 
 draw();
 
 const start = async () => {
+  running = true;
   const url = import.meta.env.VITE_BACKEND_URL + "/train";
 
   const res = await fetch(url);
@@ -65,18 +77,31 @@ const start = async () => {
 
   maxRewardsSpan.innerText = maxRewards.toString();
 
+  const skip = states.length / 20;
   const ms = 1000 / fps;
   let i = 0;
+  let j = 0;
   timer = setInterval(() => {
-    if (i === states.length && timer !== null) clearInterval(timer);
+    if (i >= states.length && timer !== null) {
+      stop();
+      return;
+    }
 
-    c1 = states[i++];
+    c1 = states[i][j++];
     draw();
+
+    if (j === states[i].length) {
+      j = 0;
+      if (i === 0) i = -1; // first & last iterations must always run
+      i += skip;
+    }
   }, ms);
 };
 
 const stop = () => {
   if (timer !== null) clearInterval(timer);
+  running = false;
+  draw();
 };
 
 document.getElementById("start-btn")!.onclick = start;
