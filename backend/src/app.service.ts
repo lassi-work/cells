@@ -39,8 +39,6 @@ export class AppService {
   }
 
   train() {
-    // player
-    let c1 = 1; // top left
     let e = 1;
     const rounds = 2000;
     const states: number[] = [];
@@ -50,6 +48,9 @@ export class AppService {
     for (let i = 0; i < rounds; i++) {
       process.stdout.write(`\rTraining round ${i + 1} / ${rounds}`);
       e = decay(e, i);
+
+      let c1 = 1; // player - top left
+      states.push(c1);
 
       for (let j = 0; j < this.maxIterationsPerRound; j++) {
         const action = this.chooseAction(c1, e);
