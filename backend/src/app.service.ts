@@ -68,6 +68,7 @@ export class AppService {
 
       if (roundRewards > maxRewards) maxRewards = roundRewards;
     }
+    console.log('\nTraining completed.');
 
     this.saveStorageData();
 
