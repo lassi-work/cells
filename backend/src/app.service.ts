@@ -45,15 +45,11 @@ export class AppService {
     const rounds = 2000;
     const states: number[] = [];
 
-    const decayFunc = this.generateDecayFunction(
-      e,
-      0.25 * rounds,
-      0.8 * rounds,
-    );
+    const decay = this.generateDecayFunction(e, 0.25 * rounds, 0.8 * rounds);
 
     for (let i = 0; i < rounds; i++) {
       process.stdout.write(`\rTraining round ${i + 1} / ${rounds}`);
-      e = decayFunc(i);
+      e = decay(i);
 
       for (let j = 0; j < this.maxIterationsPerRound; j++) {
         const action = this.chooseAction(c1, e);
