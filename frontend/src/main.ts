@@ -25,6 +25,9 @@ const allowDecayCheckbox = document.getElementById(
   "decayE"
 ) as HTMLInputElement;
 const roundsInput = document.getElementById("rounds") as HTMLInputElement;
+const trainingBlocker = document.getElementById(
+  "training-blocker"
+) as HTMLDivElement;
 
 const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
@@ -72,8 +75,9 @@ const draw = () => {
 
 draw();
 
-const start = async () => {
-  running = true;
+const train = async (): Promise<Data> => {
+  trainingBlocker.style.display = "box";
+
   const decayE = allowDecayCheckbox.checked;
   const rounds = parseInt(roundsInput.value) || 2000;
   const url = `${
@@ -81,7 +85,14 @@ const start = async () => {
   }/train?decayE=${decayE}&rounds=${rounds}`;
 
   const res = await fetch(url);
-  const { states, maxRewards } = (await res.json()) as Data;
+  const json = await res.json();
+  trainingBlocker.style.display = "none";
+  return json;
+};
+
+const start = async () => {
+  running = true;
+  const { states, maxRewards } = await train();
 
   maxRewardsSpan.innerText = maxRewards.toString();
 
@@ -114,4 +125,4 @@ const stop = () => {
 
 document.getElementById("start-btn")!.onclick = start;
 document.getElementById("stop-btn")!.onclick = stop;
-// window.onload = start;
+document.getElementById("train-btn")!.onclick = train;
