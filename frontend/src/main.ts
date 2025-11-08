@@ -131,7 +131,7 @@ const stop = () => {
 };
 
 const play = (states: number[][]) => {
-  const skip = states.length === 1 ? 1 : Math.floor(states.length / 20);
+  const skip = states.length === 1 ? 2 : Math.floor(states.length / 20);
   const ms = 1000 / fps;
   let i = 0;
   let j = 0;
