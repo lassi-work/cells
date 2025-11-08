@@ -90,10 +90,10 @@ export class AppService {
     };
   }
 
-  private calculateQ(s: number, newS: number, a: Action) {
+  private calculateQ(s: number, nextS: number, a: Action) {
     const currentQ = this.q[s][a];
-    const reward = this.game.getRewards(newS);
-    const bestNextQ = Math.max(...this.q[newS]);
+    const reward = this.game.getRewards(nextS);
+    const bestNextQ = Math.max(...this.q[nextS]);
     const alpha = 0.1;
     const discount = 0.95;
 
