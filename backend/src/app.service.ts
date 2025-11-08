@@ -61,10 +61,10 @@ export class AppService {
 
       for (let j = 0; j < this.maxIterationsPerRound; j++) {
         const action = this.chooseAction(c1, e);
-        this.q[c1][action] = this.calculateQ(c1, this.c2, action);
-        const oldC1 = c1;
-        c1 = this.game.performAction(action, c1);
-        roundRewards += this.game.getRewards(oldC1, c1);
+        const nextS = this.game.performAction(action, c1);
+        this.q[c1][action] = this.calculateQ(c1, nextS, action);
+        roundRewards += this.game.getRewards(c1, nextS);
+        c1 = nextS;
         states[i].push(c1);
       }
 
