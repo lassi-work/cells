@@ -77,6 +77,22 @@ export class AppService {
     return { maxRewards, states };
   }
 
+  getBestStates() {
+    const states: number[] = [];
+    let c1 = 1;
+    let rewards = 0;
+
+    for (let j = 0; j < this.maxIterationsPerRound; j++) {
+      const action = this.chooseAction(c1, -1);
+      const oldC1 = c1;
+      c1 = this.game.performAction(action, c1);
+      rewards += this.game.getRewards(oldC1, c1);
+      states.push(c1);
+    }
+
+    return { rewards, states };
+  }
+
   private chooseAction(s: number, e: number): Action {
     if (Math.random() <= e) {
       return Math.floor(Math.random() * 10) % this.actionsCount;

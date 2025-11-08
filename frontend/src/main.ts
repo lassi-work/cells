@@ -1,6 +1,11 @@
-type Data = {
+type TrainingData = {
   states: number[][];
   maxRewards: number;
+};
+
+type BestStatesData = {
+  states: number[];
+  rewards: number;
 };
 
 const fps = 10;
@@ -28,6 +33,9 @@ const roundsInput = document.getElementById("rounds") as HTMLInputElement;
 const trainingBlocker = document.getElementById(
   "training-blocker"
 ) as HTMLDivElement;
+const withoutTrainingCheckbox = document.getElementById(
+  "without-training"
+) as HTMLInputElement;
 
 const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
@@ -75,7 +83,7 @@ const draw = () => {
 
 draw();
 
-const train = async (): Promise<Data> => {
+const train = async (): Promise<TrainingData> => {
   trainingBlocker.style.display = "box";
 
   const decayE = allowDecayCheckbox.checked;
@@ -90,13 +98,40 @@ const train = async (): Promise<Data> => {
   return json;
 };
 
+const getBestStates = async (): Promise<BestStatesData> => {
+  const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/best-states`);
+  const json = (await res.json()) as BestStatesData;
+  return json;
+};
+
 const start = async () => {
   running = true;
-  const { states, maxRewards } = await train();
+  let states: number[][] = [];
+  let maxRewards = 0;
+
+  if (withoutTrainingCheckbox.checked) {
+    const data = await getBestStates();
+    states = [data.states];
+    maxRewards = data.rewards;
+  } else {
+    const data = await train();
+    states = data.states;
+    maxRewards = data.maxRewards;
+  }
 
   maxRewardsSpan.innerText = maxRewards.toString();
 
-  const skip = states.length / 20;
+  play(states);
+};
+
+const stop = () => {
+  if (timer !== null) clearInterval(timer);
+  running = false;
+  draw();
+};
+
+const play = (states: number[][]) => {
+  const skip = states.length === 1 ? 1 : Math.floor(states.length / 20);
   const ms = 1000 / fps;
   let i = 0;
   let j = 0;
@@ -115,12 +150,6 @@ const start = async () => {
       i += skip;
     }
   }, ms);
-};
-
-const stop = () => {
-  if (timer !== null) clearInterval(timer);
-  running = false;
-  draw();
 };
 
 document.getElementById("start-btn")!.onclick = start;

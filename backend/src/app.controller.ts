@@ -5,16 +5,21 @@ type TrainQuery = {
   [key in keyof TrainParams]: string | undefined;
 };
 
-@Controller('train')
+@Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get()
+  @Get('train')
   train(@Query() query: TrainQuery) {
     const params: TrainParams = {
       decayE: query.decayE === 'true',
       rounds: query.rounds ? parseInt(query.rounds) : undefined,
     };
     return this.appService.train(params);
+  }
+
+  @Get('best-states')
+  getStatus() {
+    return this.appService.getBestStates();
   }
 }
