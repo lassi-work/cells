@@ -9,7 +9,6 @@ export enum Action {
 
 @Injectable()
 export class GameService {
-  private readonly positionRewards: number[];
   private readonly targetReward: number = 18 * 13;
   private readonly distanceRewards: number[];
   private readonly gridSize = 10;
@@ -38,15 +37,6 @@ export class GameService {
 
   performAction(a: Action, s: number) {
     return this.actions[a](s);
-  }
-
-  private generatePositionRewards() {
-    const _r: number[] = [];
-    for (let i = 1; i < this.boxesCount; i++) {
-      _r[i] = -1;
-    }
-    _r[this.boxesCount] = 100; // goal state
-    return _r;
   }
 
   private generateDistanceRewards() {
