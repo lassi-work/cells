@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Configurations from './types/configurations';
 import * as fs from 'node:fs';
-import { GameService, Action } from './game.service';
+import { GameService, Action, Coordinate } from './game.service';
 
 type StorageData = {
-  q?: Record<number, number[]>;
+  q?: number[][][];
 };
 
 export type TrainParams = {
@@ -15,14 +15,14 @@ export type TrainParams = {
 
 @Injectable()
 export class AppService {
-  private readonly q: Record<number, number[]>;
+  /**
+   * [x][y][action]
+   */
+  private readonly q: number[][][] = [];
   private readonly gridSize = 10;
-  private readonly boxesCount = this.gridSize * this.gridSize;
   private readonly actionsCount = 4;
   private readonly maxIterationsPerRound = 18;
   private readonly defaultRounds = 2000;
-
-  private readonly c2 = this.boxesCount;
 
   constructor(
     private readonly configs: ConfigService<Configurations>,
@@ -39,7 +39,7 @@ export class AppService {
 
     let e = 1;
     let maxRewards = -Infinity;
-    const states: number[][] = [];
+    const states: Array<Coordinate[]> = []; // array of coordinates arrays
 
     const decay = this.generateDecayFunction(
       e,
@@ -52,20 +52,20 @@ export class AppService {
       process.stdout.write(`\rTraining round ${i + 1} / ${p.rounds}`);
       if (p.decayE) e = decay(e, i);
 
-      let c1 = 1; // player - top left
+      let c: Coordinate = [0, 0]; // player - top left
 
       states[i] = [];
-      states[i].push(c1);
+      states[i].push(c);
 
       let roundRewards = 0;
 
       for (let j = 0; j < this.maxIterationsPerRound; j++) {
-        const action = this.chooseAction(c1, e);
-        const nextS = this.game.performAction(action, c1);
-        this.q[c1][action] = this.calculateQ(c1, nextS, action);
-        roundRewards += this.game.getRewards(c1, nextS);
-        c1 = nextS;
-        states[i].push(c1);
+        const action = this.chooseAction(c, e);
+        const nextS = this.game.performAction(action, c);
+        this.q[c[0]][c[1]][action] = this.calculateQ(c, nextS, action);
+        roundRewards += this.game.getRewards(c, nextS);
+        c = nextS;
+        states[i].push(c);
       }
 
       if (roundRewards > maxRewards) maxRewards = roundRewards;
@@ -78,26 +78,37 @@ export class AppService {
   }
 
   getBestStates() {
-    const states: number[] = [];
-    let c1 = 1;
+    const states: Coordinate[] = [];
+    let c: Coordinate = [0, 0]; // player - top left
     let rewards = 0;
 
-    for (let j = 0; j < this.maxIterationsPerRound; j++) {
-      const action = this.chooseAction(c1, -1);
-      const oldC1 = c1;
-      c1 = this.game.performAction(action, c1);
-      rewards += this.game.getRewards(oldC1, c1);
-      states.push(c1);
+    for (let i = 0; i < this.maxIterationsPerRound; i++) {
+      const action = this.chooseAction(c);
+      const prevC = c;
+      c = this.game.performAction(action, c);
+      rewards += this.game.getRewards(prevC, c);
+      states.push(c);
     }
 
     return { rewards, states };
   }
 
-  private chooseAction(s: number, e: number): Action {
+  /**
+   * Get next best action.
+   * @param c Current coordinate
+   */
+  private chooseAction(c: Coordinate): Action;
+  /**
+   * Get next best action or random action based on epsilon.
+   * @param c Current coordinate
+   * @param e Epsilon value between 0 and 1
+   */
+  private chooseAction(c: Coordinate, e: number): Action;
+  private chooseAction(c: Coordinate, e: number = -1): Action {
     if (Math.random() <= e) {
       return Math.floor(Math.random() * 10) % this.actionsCount;
     } else {
-      const qValues = this.q[s];
+      const qValues = this.q[c[0]][c[1]];
       let maxIdx = 0;
       for (let i = 1; i < this.actionsCount; i++)
         if (qValues[maxIdx] < qValues[i]) maxIdx = i;
@@ -114,10 +125,10 @@ export class AppService {
     };
   }
 
-  private calculateQ(s: number, nextS: number, a: Action) {
-    const currentQ = this.q[s][a];
-    const reward = this.game.getRewards(s, nextS);
-    const bestNextQ = Math.max(...this.q[nextS]);
+  private calculateQ(c: Coordinate, nextC: Coordinate, a: Action) {
+    const currentQ = this.q[c[0]][c[1]][a];
+    const reward = this.game.getRewards(c, nextC);
+    const bestNextQ = Math.max(...this.q[nextC[0]][nextC[1]]);
     const alpha = 0.1;
     const discount = 0.95;
 
@@ -142,12 +153,17 @@ export class AppService {
     fs.writeFileSync(storeFile, JSON.stringify(data, null, 2));
   }
 
-  private generateQs(): Record<number, number[]> {
-    const _q: Record<number, number[]> = {};
-    for (let i = 1; i <= this.boxesCount; i++) {
-      _q[i] = [];
-      for (let j = 0; j < this.actionsCount; j++) _q[i][j] = 0;
+  private generateQs() {
+    const _q: typeof this.q = [];
+
+    for (let x = 1; x < this.game.gridSize; x++) {
+      _q[x] = [];
+      for (let y = 0; y < this.game.gridSize; y++) {
+        _q[x][y] = [];
+        for (let a = 0; a < this.actionsCount; a++) _q[x][y][a] = 0;
+      }
     }
+
     return _q;
   }
 }

@@ -1,5 +1,16 @@
 import { Injectable } from '@nestjs/common';
 
+/**
+ * there is a 100 blocks square grid. player is starting at (0, 0)
+ * target is at (9, 9)
+ * rewards are based on the distance to the target. lesser distance means higher reward
+ */
+
+/**
+ * [X, y]
+ */
+export type Coordinate = [number, number];
+
 export enum Action {
   Left,
   Right,
@@ -9,51 +20,63 @@ export enum Action {
 
 @Injectable()
 export class GameService {
-  private readonly targetReward: number = 18 * 13;
-  private readonly distanceRewards: number[];
-  private readonly gridSize = 10;
-  private readonly boxesCount = this.gridSize * this.gridSize;
-  private readonly hittingWallPenalty: number;
-  private readonly targetState = this.boxesCount;
+  readonly gridSize = 10;
 
-  private readonly actions: Record<Action, (s: number) => number> = {
-    [Action.Left]: (s) => (s % this.gridSize === 1 ? s : s - 1),
-    [Action.Right]: (s) => (s % this.gridSize > 0 ? s + 1 : s),
-    [Action.Down]: (s) =>
-      s < this.boxesCount - this.gridSize ? s + this.gridSize : s,
-    [Action.Up]: (s) => (s > this.gridSize ? s - this.gridSize : s),
+  private readonly targetReward: number = 18 * 13;
+  private readonly hittingWallPenalty: number;
+
+  /**
+   * An [x][y] array representing the distance rewards for each position
+   * in the grid.
+   */
+  private readonly distanceRewards: number[][];
+
+  private readonly _target: Coordinate = [this.gridSize - 1, this.gridSize - 1];
+
+  /**
+   * x and y can move from 0 to `gridSize - 1`. Inclusive of
+   * boundaries. If a move would result in an out-of-bounds position,
+   * the function returns the same coordinates.
+   */
+  private readonly actions: Record<Action, (c: Coordinate) => Coordinate> = {
+    [Action.Left]: ([x, y]) => [x > 0 ? x - 1 : x, y],
+    [Action.Right]: ([x, y]) => [x < this.gridSize - 1 ? x + 1 : x, y],
+    [Action.Down]: ([x, y]) => [x, y < this.gridSize - 1 ? y + 1 : y],
+    [Action.Up]: ([x, y]) => [x, y > 0 ? y - 1 : y],
   };
 
   constructor() {
     this.distanceRewards = this.generateDistanceRewards();
-    this.hittingWallPenalty = Math.min(...this.distanceRewards.slice(1)) - 1;
+    // starting point has the least distance reward
+    // hitting wall has the least reward
+    this.hittingWallPenalty = this.distanceRewards[0][0] - 1;
   }
 
-  getRewards(oldS: number, s: number): number {
-    if (oldS === s) return this.hittingWallPenalty;
-    if (s === this.targetState) return this.targetReward;
-    return this.distanceRewards[s];
+  getRewards(prevC: Coordinate, c: Coordinate): number {
+    if (this.areCoordinatesEqual(prevC, c)) return this.hittingWallPenalty;
+    if (this.areCoordinatesEqual(c, this._target)) return this.targetReward;
+    return this.distanceRewards[c[0]][c[1]];
   }
 
-  performAction(a: Action, s: number) {
-    return this.actions[a](s);
+  performAction(a: Action, c: Coordinate) {
+    return this.actions[a](c);
   }
 
-  private generateDistanceRewards() {
-    const _r: number[] = [];
-    const targetX = this.targetState % this.gridSize || this.gridSize;
-    let targetY = Math.floor(this.targetState / this.gridSize);
-    if (targetX !== this.gridSize) targetY += 1;
+  private generateDistanceRewards(): number[][] {
+    const _r: number[][] = [];
 
-    for (let i = 1; i <= this.boxesCount; i++) {
-      const x = i % this.gridSize || this.gridSize;
-      let y = Math.floor(i / this.gridSize);
-      if (x !== this.gridSize) y += 1;
-
-      const distance = Math.hypot(targetX - x, targetY - y);
-      _r[i] = -distance;
+    for (let x = 0; x < this.gridSize; x++) {
+      for (let y = 0; y < this.gridSize; y++) {
+        const dx = this._target[0] - x;
+        const dy = this._target[1] - y;
+        _r[x][y] = Math.hypot(dx, dy);
+      }
     }
 
     return _r;
+  }
+
+  private areCoordinatesEqual(a: Coordinate, b: Coordinate) {
+    return a[0] === b[0] && a[1] === b[1];
   }
 }
