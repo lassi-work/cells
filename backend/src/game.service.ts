@@ -70,7 +70,7 @@ export class GameService {
       for (let y = 0; y < this.gridSize; y++) {
         const dx = this._target[0] - x;
         const dy = this._target[1] - y;
-        _r[x][y] = Math.hypot(dx, dy);
+        _r[x][y] = -Math.hypot(dx, dy);
       }
     }
 
