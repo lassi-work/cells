@@ -87,7 +87,7 @@ const train = async (): Promise<TrainingData> => {
   trainingBlocker.style.display = "flex";
 
   const decayE = allowDecayCheckbox.checked;
-  const rounds = parseInt(roundsInput.value) || 2000;
+  const rounds = Number.parseInt(roundsInput.value) || 2000;
   const url = `${
     import.meta.env.VITE_BACKEND_URL
   }/train?decayE=${decayE}&rounds=${rounds}`;
