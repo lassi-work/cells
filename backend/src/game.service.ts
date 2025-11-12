@@ -66,6 +66,7 @@ export class GameService {
     const _r: number[][] = [];
 
     for (let x = 0; x < this.gridSize; x++) {
+      _r[x] = [];
       for (let y = 0; y < this.gridSize; y++) {
         const dx = this._target[0] - x;
         const dy = this._target[1] - y;
