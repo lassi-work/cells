@@ -156,7 +156,7 @@ export class AppService {
   private generateQs() {
     const _q: typeof this.q = [];
 
-    for (let x = 1; x < this.game.gridSize; x++) {
+    for (let x = 0; x < this.game.gridSize; x++) {
       _q[x] = [];
       for (let y = 0; y < this.game.gridSize; y++) {
         _q[x][y] = [];
