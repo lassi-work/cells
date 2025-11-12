@@ -1,23 +1,27 @@
+/**
+ * [X, y]
+ */
+export type Coordinate = [number, number];
+
 type TrainingData = {
-  states: number[][];
+  states: Coordinate[][];
   maxRewards: number;
 };
 
 type BestStatesData = {
-  states: number[];
+  states: Coordinate[];
   rewards: number;
 };
 
 const fps = 10;
 const gridSize = 10; // 10x10
 const cellSize = 40;
-const boxesCount = gridSize * gridSize;
 let timer: number | null = null;
 let running = false;
 
 // two cells
-let c1 = 1; // top left
-const c2 = boxesCount; // bottom right
+let c1: Coordinate = [0, 0]; // top left
+const c2: Coordinate = [gridSize - 1, gridSize - 1]; // bottom right
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 canvas.width = gridSize * cellSize;
@@ -42,11 +46,6 @@ const withoutTrainingCheckbox = document.getElementById(
 
 const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
-const getCoordinates = (s: number) => {
-  s--;
-  return [(s % gridSize) * cellSize, Math.floor(s / gridSize) * cellSize];
-};
-
 const draw = () => {
   // clear
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -65,13 +64,11 @@ const draw = () => {
 
   // draw c2
   ctx.fillStyle = "green";
-  const coord2 = getCoordinates(c2);
-  ctx.fillRect(coord2[0], coord2[1], cellSize, cellSize);
+  ctx.fillRect(c2[0] * cellSize, c2[1] * cellSize, cellSize, cellSize);
 
   // draw c1
   ctx.fillStyle = "red";
-  const coord1 = getCoordinates(c1);
-  ctx.fillRect(coord1[0], coord1[1], cellSize, cellSize);
+  ctx.fillRect(c1[0] * cellSize, c1[1] * cellSize, cellSize, cellSize);
 
   // draw status
   if (!running) {
@@ -109,7 +106,7 @@ const getBestStates = async (): Promise<BestStatesData> => {
 
 const start = async () => {
   running = true;
-  let states: number[][] = [];
+  let states: Coordinate[][] = [];
   let maxRewards = 0;
 
   if (withoutTrainingCheckbox.checked) {
@@ -134,7 +131,7 @@ const stop = () => {
   currentRoundSpan.innerText = "unknown";
 };
 
-const play = (states: number[][]) => {
+const play = (states: Coordinate[][]) => {
   const skip = states.length === 1 ? 2 : Math.floor(states.length / 20);
   const ms = 1000 / fps;
   let i = 0;
